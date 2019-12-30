@@ -82,7 +82,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	command = fmt.Sprintf(`cd "%s" && git add "%s" && git commit -m "auto-commit" && git push origin master && cd -`, dir, filename)
+	command = fmt.Sprintf(`cd "%s" && git pull && git add "%s" && git commit -m "auto-commit" && git push && cd -`, dir, filename)
 	if *dryRun {
 		log.Println(command)
 	} else {
