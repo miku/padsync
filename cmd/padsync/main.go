@@ -19,7 +19,6 @@ import (
 var (
 	padURL           = flag.String("p", "", "link to pad")
 	gitRepo          = flag.String("g", "", "path to repo, with ssh syntax, and write access")
-	name             = flag.String("n", "", "name of the file, automatically set to pad name")
 	contentSizeLimit = flag.Int64("l", 10485760, "limit of content to fetch and commit")
 	dryRun           = flag.Bool("dry", false, "dry run")
 )
