@@ -82,7 +82,7 @@ func main() {
 	filename := fmt.Sprintf("%s.txt", filepath.Join(dir, slug.Make(*padURL)))
 	if *dest != "" {
 		filename = fmt.Sprintf(filepath.Join(dir, *dest))
-		if err := os.MkdirAll(path.Dir(filename)); err != nil {
+		if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
 			log.Fatal(err)
 		}
 	}
