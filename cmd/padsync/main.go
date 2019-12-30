@@ -21,6 +21,7 @@ var (
 	gitRepo          = flag.String("g", "", "path to repo, with ssh syntax, and write access")
 	name             = flag.String("n", "", "name of the file, automatically set to pad name")
 	contentSizeLimit = flag.Int64("l", 10485760, "limit of content to fetch and commit")
+	dryRun           = flag.Bool("dry", false, "dry run")
 )
 
 // fetchPad fetches the text from the pad.
@@ -61,19 +62,33 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = clam.Run("git clone {{ repo }} {{ dir }}", clam.Map{"repo": *gitRepo, "dir": dir})
-	if err != nil {
-		log.Fatal(err)
+
+	log.Printf("cache directory at %s", dir)
+	command := fmt.Sprintf(`git clone "%s" "%s"`, *gitRepo, dir)
+
+	if *dryRun {
+		log.Printf(command)
+	} else {
+		err = clam.Run(command, clam.Map{})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	defer os.Remove(dir)
 	filename := fmt.Sprintf("%s.txt", filepath.Join(dir, slug.Make(*padURL)))
 	log.Printf("updating %s", filename)
-	if err := ioutil.WriteFile(filename, data, 0644); err != nil {
-		log.Fatal(err)
+	if !*dryRun {
+		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
+			log.Fatal(err)
+		}
 	}
-	if err := clam.Run(`cd {{ dir }} && git add {{ filename }} && git commit -m "auto-commit" && git push origin master && cd -`,
-		clam.Map{"dir": dir, "filename": filename}); err != nil {
-		log.Fatal(err)
+	command = fmt.Sprintf(`cd "%s" && git add "%s" && git commit -m "auto-commit" && git push origin master && cd -`, dir, filename)
+	if *dryRun {
+		log.Println(command)
+	} else {
+		if err := clam.Run(command, clam.Map{}); err != nil {
+			log.Fatal(err)
+		}
 	}
 	log.Println("successfully updated repo")
 }
