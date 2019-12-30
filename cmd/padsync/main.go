@@ -21,6 +21,7 @@ var (
 	gitRepo          = flag.String("g", "", "path to repo, with ssh syntax, and write access")
 	contentSizeLimit = flag.Int64("l", 10485760, "limit of content to fetch and commit")
 	dryRun           = flag.Bool("dry", false, "dry run")
+	dest             = flag.String("t", "", "destination path (or slug of url, if not specified)")
 )
 
 // fetchPad fetches the text from the pad.
@@ -79,6 +80,12 @@ func main() {
 		}
 	}()
 	filename := fmt.Sprintf("%s.txt", filepath.Join(dir, slug.Make(*padURL)))
+	if *dest != "" {
+		filename = fmt.Sprintf(filepath.Join(dir, *dest))
+		if err := os.MkdirAll(path.Dir(filename)); err != nil {
+			log.Fatal(err)
+		}
+	}
 	log.Printf("updating %s", filename)
 	if !*dryRun {
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {

@@ -27,8 +27,10 @@ Multiple pads can be synced into a single repo.
 
 You will need ssh (rw) access to a git repository.
 
-The content of [https://yourpart.eu/p/example](https://yourpart.eu/p/example)
-will end up in a file named `https-yourpart-eu-p-example.txt`.
+By default, the content of
+[https://yourpart.eu/p/example](https://yourpart.eu/p/example) will end up in
+a file named `https-yourpart-eu-p-example.txt` (or pass in a path relative to
+the repo root via -t).
 
 ```shell
 $ padsync -dry -p https://yourpart.eu/p/example -g git@git.example.com:user/pads.git
