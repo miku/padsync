@@ -74,7 +74,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	defer os.Remove(dir)
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	filename := fmt.Sprintf("%s.txt", filepath.Join(dir, slug.Make(*padURL)))
 	log.Printf("updating %s", filename)
 	if !*dryRun {
