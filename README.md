@@ -46,3 +46,6 @@ $ padsync -dry -p https://yourpart.eu/p/example -g git@git.example.com:user/pads
 $ go get -u -v github.com/miku/padsync/cmd/padsync
 ```
 
+# Credits
+
+* Illustration from [etc.usf.edu/clipart/](https://etc.usf.edu/clipart/).
