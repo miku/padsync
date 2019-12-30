@@ -2,6 +2,8 @@
 
 Tracking etherpads. Regularly take snapshots of a etherpad and store it in a git repository.
 
+![](static/pinwheel_7763_sm.gif)
+
 # Background
 
 [The Carpentries](https://carpentries.org/) use etherpads during trainings,
