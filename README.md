@@ -38,4 +38,3 @@ $ padsync -dry -p https://yourpart.eu/p/example -g git@git.example.com:user/pads
 2019/12/30 16:43:50 successfully updated repo
 ```
 
-
