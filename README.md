@@ -25,6 +25,8 @@ There are some disadvantages as well:
 Regularly export and commit content from etherpad into a git repository.
 Multiple pads can be synced into a single repo.
 
+You will need ssh (rw) access to a git repository.
+
 ```shell
 $ padsync -dry -p https://yourpart.eu/p/example -g git@git.example.com:user/pads.git
 2019/12/30 16:43:50 export URL at: https://yourpart.eu/p/example/export/txt
