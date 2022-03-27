@@ -22,6 +22,7 @@ var (
 	contentSizeLimit = flag.Int64("l", 10485760, "limit of content to fetch and commit")
 	dryRun           = flag.Bool("dry", false, "dry run")
 	dest             = flag.String("t", "", "destination path (or slug of url, if not specified)")
+	branch           = flag.String("b", "main", "branch name")
 )
 
 // fetchPad fetches the text from the pad.
@@ -92,7 +93,8 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	command = fmt.Sprintf(`cd "%s" && git pull && git add "%s" && git diff-index --quiet HEAD || git commit -m "auto-commit" && git push && cd -`, dir, filename)
+	command = fmt.Sprintf(`cd "%s" && git pull origin %s && git add "%s" && git diff-index --quiet HEAD || git commit -m "auto-commit" && git push origin %s && cd -`,
+		dir, *branch, filename, branch)
 	if *dryRun {
 		log.Println(command)
 	} else {
