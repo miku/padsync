@@ -94,7 +94,7 @@ func main() {
 		}
 	}
 	command = fmt.Sprintf(`cd "%s" && git pull origin %s && git add "%s" && git diff-index --quiet HEAD || git commit -m "auto-commit" && git push origin %s && cd -`,
-		dir, *branch, filename, branch)
+		dir, *branch, filename, *branch)
 	if *dryRun {
 		log.Println(command)
 	} else {
