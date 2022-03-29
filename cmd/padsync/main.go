@@ -25,8 +25,9 @@ var (
 	branch           = flag.String("b", "main", "branch name")
 )
 
-// fetchPad fetches the text from the pad.
-func fetchPad(link string) ([]byte, error) {
+// readBodyLimit fetches the text from the pad. Any HTTP error will be treated
+// as an error as well.
+func readBodyLimit(link string, limit int64) ([]byte, error) {
 	resp, err := pester.Get(link)
 	if err != nil {
 		return nil, err
@@ -35,69 +36,83 @@ func fetchPad(link string) ([]byte, error) {
 	if resp.StatusCode >= 400 {
 		return nil, fmt.Errorf("got %s at %s", resp.Status, link)
 	}
-	return ioutil.ReadAll(io.LimitReader(resp.Body, *contentSizeLimit))
+	return ioutil.ReadAll(io.LimitReader(resp.Body, limit))
 }
 
 func main() {
-	flag.Parse()
+	var (
+		u                          *url.URL
+		data                       []byte
+		err                        error
+		tempDir, command, filename string
+	)
+	flag.Usage = func() {
+		fmt.Println(`Usage: padsynpadsync [OPTIONS]
 
-	if *padURL == "" || *gitRepo == "" {
-		log.Fatal("Pad -p and git repo -g are required")
+    $ padsync -g git@github.com/example/repo -p https://etherpad.wikimedia.org/p/padsync-example -b master
+
+Flags
+`)
+		flag.PrintDefaults()
 	}
-
-	u, err := url.Parse(*padURL)
-	if err != nil {
+	flag.Parse()
+	if *padURL == "" || *gitRepo == "" {
+		log.Fatal("pad -p and git repo -g are required")
+	}
+	if u, err = url.Parse(*padURL); err != nil {
 		log.Fatal(err)
 	}
 	u.Path = path.Join(u.Path, "export/txt")
 	log.Printf("export URL at: %s", u.String())
-
-	data, err := fetchPad(u.String())
-	if err != nil {
+	if data, err = readBodyLimit(u.String(), *contentSizeLimit); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("fetched %d bytes from %s", len(data), *padURL)
-
-	// Clone repo into temporary dir, add file, commit, push.
-	dir, err := ioutil.TempDir("", "padsync-git-")
-	if err != nil {
+	if tempDir, err = ioutil.TempDir("", "padsync-git-"); err != nil {
 		log.Fatal(err)
 	}
-
-	log.Printf("cache directory at %s", dir)
-	command := fmt.Sprintf(`git clone "%s" "%s"`, *gitRepo, dir)
-
-	if *dryRun {
-		log.Printf(command)
-	} else {
-		err = clam.Run(command, clam.Map{})
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
 	defer func() {
-		if err := os.RemoveAll(dir); err != nil {
+		if err := os.RemoveAll(tempDir); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	filename := fmt.Sprintf("%s.txt", filepath.Join(dir, slug.Make(*padURL)))
+	log.Printf("cache directory at %s", tempDir)
+	command = fmt.Sprintf(`git clone "%s" "%s"`, *gitRepo, tempDir)
+	switch {
+	case *dryRun:
+		log.Printf(command)
+	default:
+		if err = clam.Run(command, clam.Map{}); err != nil {
+			log.Fatal(err)
+		}
+	}
+	filename = fmt.Sprintf("%s.txt", filepath.Join(tempDir, slug.Make(*padURL)))
 	if *dest != "" {
-		filename = fmt.Sprintf(filepath.Join(dir, *dest))
-		if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
+		filename = fmt.Sprintf(filepath.Join(tempDir, *dest))
+		if err = os.MkdirAll(path.Dir(filename), 0755); err != nil {
 			log.Fatal(err)
 		}
 	}
 	log.Printf("updating %s", filename)
-	if !*dryRun {
+	switch {
+	case *dryRun:
+		log.Printf("written file %s", filename)
+	default:
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			log.Fatal(err)
 		}
 	}
-	command = fmt.Sprintf(`cd "%s" && git pull origin %s && git add "%s" && git diff-index --quiet HEAD || git commit -m "auto-commit" && git push origin %s && cd -`,
-		dir, *branch, filename, *branch)
-	if *dryRun {
+	command = fmt.Sprintf(`
+		cd "%s" &&
+		git pull origin %s &&
+		git add "%s" &&
+		git diff-index --quiet HEAD || git commit -m "auto-commit" &&
+		git push origin %s && cd -`,
+		tempDir, *branch, filename, *branch)
+	switch {
+	case *dryRun:
 		log.Println(command)
-	} else {
+	default:
 		if err := clam.Run(command, clam.Map{}); err != nil {
 			log.Fatal(err)
 		}
